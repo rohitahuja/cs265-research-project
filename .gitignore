@@ -1,0 +1,37 @@
+# Object files
+obj/*
+*.o
+*.ko
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects
+*.so
+*.so.*
+
+# Executables
+*.out
+bin/*
+server
+client
+.deps
+
+#ide stuff
+tags
+Tags
+*.swp
+
+#project tests
+project_tests/*
+
+#db.txt
+src/db.txt
+
+# other
+r*hs # vtune output
+.deps # makefile temps
+
