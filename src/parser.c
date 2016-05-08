@@ -356,10 +356,8 @@ status parse_dsl(char* str, dsl* d, db_operator* op) {
         char* args = strtok(NULL, close_paren);
 
         char* arg = strtok(args, comma);
-        flush_queue(&queue, arg);
         op->result1 = find_result(arg);
         arg = strtok(NULL, comma);
-        flush_queue(&queue, arg);
         op->result2 = find_result(arg);
 
         if (!op->result1 || !op->result2) {
@@ -398,7 +396,6 @@ status parse_dsl(char* str, dsl* d, db_operator* op) {
         char col_name[strlen(arg)];
         strcpy(col_name, arg);
         char* name = strtok(NULL, comma);
-        flush_queue(&queue, name);
         op->result1 = find_result(name);
 
         int tbl_idx = find_table_from_col_name(arg);
@@ -445,7 +442,6 @@ status parse_dsl(char* str, dsl* d, db_operator* op) {
         while((vec_name = strtok(args, comma))) {
             char vec_name_copy[strlen(vec_name)];
             strcpy(vec_name_copy, vec_name);
-            flush_queue(&queue, vec_name_copy);
             result* res = NULL;
             s = prepare_result(vec_name_copy, &res);
             if (s.code != OK) {
@@ -481,7 +477,6 @@ status parse_dsl(char* str, dsl* d, db_operator* op) {
         // This gives us everything inside the parens
         strtok(NULL, open_paren);
         char* vec_name = strtok(NULL, close_paren);
-        flush_queue(&queue, vec_name);
 
         s = prepare_result(vec_name, &(op->result1));
         if (s.code != OK) {
@@ -507,7 +502,6 @@ status parse_dsl(char* str, dsl* d, db_operator* op) {
         // This gives us everything inside the parens
         strtok(NULL, open_paren);
         char* vec_name = strtok(NULL, close_paren);
-        flush_queue(&queue, vec_name);
 
         s = prepare_result(vec_name, &(op->result1));
         if (s.code != OK) {
@@ -533,7 +527,6 @@ status parse_dsl(char* str, dsl* d, db_operator* op) {
         // This gives us everything inside the parens
         strtok(NULL, open_paren);
         char* vec_name = strtok(NULL, close_paren);
-        flush_queue(&queue, vec_name);
 
         s = prepare_result(vec_name, &(op->result1));
         if (s.code != OK) {
@@ -559,7 +552,6 @@ status parse_dsl(char* str, dsl* d, db_operator* op) {
         // This gives us everything inside the parens
         strtok(NULL, open_paren);
         char* vec_name = strtok(NULL, close_paren);
-        flush_queue(&queue, vec_name);
 
         s = prepare_result(vec_name, &(op->result1));
         if (s.code != OK) {
@@ -647,12 +639,10 @@ status parse_dsl(char* str, dsl* d, db_operator* op) {
         char* vec_name = strtok(args, comma);
         char var_name1[strlen(vec_name)];
         strcpy(var_name1, vec_name);
-        flush_queue(&queue, var_name1);
 
         vec_name = strtok(NULL, comma);
         char var_name2[strlen(vec_name)];
         strcpy(var_name2, vec_name);
-        flush_queue(&queue, var_name2);
 
         s = prepare_result(var_name1, &(op->result1));
         if (s.code != OK) {
@@ -693,12 +683,10 @@ status parse_dsl(char* str, dsl* d, db_operator* op) {
         char* vec_name = strtok(args, comma);
         char var_name1[strlen(vec_name)];
         strcpy(var_name1, vec_name);
-        flush_queue(&queue, var_name1);
 
         vec_name = strtok(NULL, comma);
         char var_name2[strlen(vec_name)];
         strcpy(var_name2, vec_name);
-        flush_queue(&queue, var_name2);
 
         s = prepare_result(var_name1, &(op->result1));
         if (s.code != OK) {
@@ -718,70 +706,6 @@ status parse_dsl(char* str, dsl* d, db_operator* op) {
             log_err(s.error_message);
             return s;
         }
-
-        s.code = OK;
-        return s;
-    } else if (d->g == HASHJOIN) {
-        status s;
-
-        op->type = JOIN;
-        // Create a working copy, +1 for '\0'
-        char* str_cpy = malloc(strlen(str) + 1);
-        strncpy(str_cpy, str, strlen(str) + 1);
-        char* vec_name1 = strtok(str_cpy, comma);
-        op->name1 = malloc(strlen(vec_name1)+1);
-        strcpy(op->name1, vec_name1);
-        char* vec_name2 = strtok(NULL, "=");
-        op->name2 = malloc(strlen(vec_name2)+1);
-        strcpy(op->name2, vec_name2);
-        strtok(NULL, open_paren);
-        char* args = strtok(NULL, close_paren);
-
-        char* vec_name3 = strtok(args, comma);
-        char vec_name_copy3[strlen(vec_name3)];
-        strcpy(vec_name_copy3, vec_name3);
-        flush_queue(&queue, vec_name_copy3);
-        s = prepare_result(vec_name_copy3, &(op->result1));
-        if (s.code != OK) {
-            log_err(s.error_message);
-            return s;
-        }
-        char* vec_name4 = strtok(NULL, comma);
-        char vec_name_copy4[strlen(vec_name4)];
-        strcpy(vec_name_copy4, vec_name4);
-        flush_queue(&queue, vec_name_copy4);
-        s = prepare_result(vec_name_copy4, &(op->result2));
-        if (s.code != OK) {
-            log_err(s.error_message);
-            return s;
-        }
-
-        char* vec_name5 = strtok(NULL, comma);
-        char vec_name_copy5[strlen(vec_name5)];
-        strcpy(vec_name_copy5, vec_name5);
-        flush_queue(&queue, vec_name_copy5);
-        s = prepare_result(vec_name_copy5, &(op->result3));
-        if (s.code != OK) {
-            log_err(s.error_message);
-            return s;
-        }
-
-        char* vec_name6 = strtok(NULL, comma);
-        char vec_name_copy6[strlen(vec_name6)];
-        strcpy(vec_name_copy6, vec_name6);
-        flush_queue(&queue, vec_name_copy6);
-        s = prepare_result(vec_name_copy6, &(op->result4));
-        if (s.code != OK) {
-            log_err(s.error_message);
-            return s;
-        }
-
-        s.code = OK;
-        return s;
-    } else if (d->g == SHARED) {
-        status s;
-
-        op->type = SHARED_SCAN;
 
         s.code = OK;
         return s;

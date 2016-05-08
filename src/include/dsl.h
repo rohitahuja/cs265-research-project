@@ -44,8 +44,6 @@ typedef enum DSLGroup {
     CNT_RESULT,
     SHUTDOWN_SERVER,
     CREATE_BTREE,
-    HASHJOIN,
-    SHARED,
 } DSLGroup;
 
 // A dsl is defined as the DSL listed on the project website.

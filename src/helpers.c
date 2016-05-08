@@ -1,4 +1,5 @@
 #include "helpers.h"
+#include "utils.h"
 #include <ctype.h>
 
 // This tells the linker that there exists a global_db and catalog external

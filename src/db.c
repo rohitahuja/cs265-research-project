@@ -3,7 +3,6 @@
 #include <limits.h>
 #include "db.h"
 #include "bpt.h"
-#include "sorted.h"
 
 // TODO(USER): Here we provide an incomplete implementation of the create_db.
 // There will be changes that you will need to include here.
@@ -111,17 +110,11 @@ status create_column(table *table, const char* name, column** col, bool sorted) 
 
 status create_index(column* col, IndexType type) {
     status s;
-    if (type == SORTED) {
-        col->index = malloc(sizeof(struct column_index));
-        col->index->type = SORTED;
-        col->index->index = init_sorted_index();
-        s = build_secondary_sorted_index(col);
-    } else if (type == B_PLUS_TREE) {
-        col->index = malloc(sizeof(struct column_index));
-        col->index->type = B_PLUS_TREE;
-        col->index->index = NULL;
-        s = build_secondary_bpt_index(col);
-    }
+    (void)type;// TODO ENSURE THIS IS BPT
+    col->index = malloc(sizeof(struct column_index));
+    col->index->type = B_PLUS_TREE;
+    col->index->index = NULL;
+    s = build_secondary_bpt_index(col);
     return s;
 }
 
@@ -154,22 +147,12 @@ status col_insert(column *col, int data) {
 
 status process_indexes(table* tbl) {
     status s;
-    
-    if (tbl->leading_idx != -1) {
-        s = leading_column_sort(tbl);
-        if (s.code != OK) {
-            return s;
-        }
-    }
 
     for(size_t i = 0; i < tbl->col_count; i++) {
         column* col = tbl->col[i];
         if (col->index) {
-            if (col->index->type == SORTED) {
-                s = build_secondary_sorted_index(col);
-            } else if (col->index->type == B_PLUS_TREE) {
-                s = build_secondary_bpt_index(col);
-            }
+            //TODO asssert that index is bpt
+            s = build_secondary_bpt_index(col);
             if (s.code != OK) {
                 return s;
             }
@@ -199,13 +182,8 @@ status index_scan(int lower, int upper, column *col, result **r) {
     (*r)->num_tuples = 0;
 
     if (col->index) {
-        if (col->index->type == B_PLUS_TREE) {
-            return find_range_bpt(col, *r, lower, upper);
-        } else if (col->index->type == SORTED) {
-            return find_range_secondary_sorted(col->index->index, *r, lower, upper);
-        }
-    } else if (col->leading) {
-        return find_range_leading_sorted(col, *r, lower, upper);
+        //TODO assert type is bpt col->index->type
+        return find_range_bpt(col, *r, lower, upper);
     }
 
     s.code = ERROR;

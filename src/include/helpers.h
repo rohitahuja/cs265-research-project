@@ -6,7 +6,6 @@
 #include <string.h>
 #include <limits.h>
 #include "cs165_api.h"
-#include "shared_scan.h"
 
 // PARSER FUNCTIONS
 int find_table(char* tbl_name);
@@ -32,6 +31,9 @@ int binary_search(int* data, int target, int start, int end);
 
 // SELECT FUNCTIONS
 int check_data(int data, int lower, int upper);
+
+// SEARCH FUNCTIONS
+int binary_search(int* data, int target, int start, int end);
 
 
 #endif // HELPERS_H__

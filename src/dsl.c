@@ -55,12 +55,6 @@ const char* shutdown_server_command = "^shutdown";
 // create(idx,awesomebase.grades.student_id,btree)
 const char* create_btree_command = "^create\\(idx\\,[a-zA-Z0-9_\\.]+\\,btree\\)";
 
-// <vec_pos1_out>,<vec_pos2_out>=hashjoin(<vec_val1>,<vec_pos1>,<vec_val2>,<vec_pos2>)
-const char* hashjoin_command = "^[a-zA-Z0-9_]+,[a-zA-Z0-9_]+=hashjoin\\([a-zA-Z0-9_\\.]+\\,[a-zA-Z0-9_\\.]+\\,[a-zA-Z0-9_\\.]+\\,[a-zA-Z0-9_\\.]+\\)";
-
-// shared
-const char* shared_scan_command = "^shared";
-
 // TODO(USER): You will need to update the commands here for every single command you add.
 dsl** dsl_commands_init(void)
 {
@@ -124,12 +118,5 @@ dsl** dsl_commands_init(void)
 
     commands[17]->c = sub_result_command;
     commands[17]->g = SUB_RESULT;
-
-    commands[18]->c = hashjoin_command;
-    commands[18]->g = HASHJOIN;    
-
-    commands[19]->c = shared_scan_command;
-    commands[19]->g = SHARED;    
-
     return commands;
 }

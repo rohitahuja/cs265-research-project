@@ -31,8 +31,6 @@
 #include "parser.h"
 #include "utils.h"
 #include "helpers.h"
-#include "shared_scan.h"
- #include "join.h"
 
 #define DEFAULT_QUERY_BUFFER_SIZE 1024
 #define change 10
@@ -45,10 +43,6 @@ db* global_db;
 
 // Variable pool for clients
 catalog** catalogs;
-
-// Variables for shared scan
-bool sscan = false;
-select_queue* queue;
 
 /**
  * parse_command takes as input the send_message from the client and then
@@ -88,36 +82,22 @@ char* execute_db_operator(db_operator* query) {
         }
         return "Rows successfully inserted.";
     } else if (query->type == SELECT) {
-        if (sscan && (queue->buffer_count == 0 || *(query->columns) == queue->col)) {
-            queue->col = *(query->columns);
-            queue->buffer[queue->buffer_count]->query = query;
-            queue->buffer_count++;
-            if (queue->buffer_count == DEFAULT_SHARED_SCAN_BUFFER_SIZE) {
-                column* col = *(query->columns);
-                s = shared_scan_select(col, &queue);
-                if (s.code != OK) {
-                    log_err(s.error_message);
-                    return s.error_message;
-                }
-            }
+        result* r = malloc(sizeof(struct result));
+        if (query->columns) {
+            s = select_data(query, &r);
+        } else if (query->result1 && query->result2) {
+            s = vec_scan(query, &r);
         } else {
-            result* r = malloc(sizeof(struct result));
-            if (query->columns) {
-                s = select_data(query, &r);
-            } else if (query->result1 && query->result2) {
-                s = vec_scan(query, &r);
-            } else {
-                return "Cannot perform select\n";
-            }
-
-            if (s.code != OK) {
-                return s.error_message;
-            }
-            int idx = catalogs[0]->var_count;
-            catalogs[0]->names[idx] = query->name1;
-            catalogs[0]->results[idx] = r;
-            catalogs[0]->var_count++;
+            return "Cannot perform select\n";
         }
+
+        if (s.code != OK) {
+            return s.error_message;
+        }
+        int idx = catalogs[0]->var_count;
+        catalogs[0]->names[idx] = query->name1;
+        catalogs[0]->results[idx] = r;
+        catalogs[0]->var_count++;
     } else if (query->type == PROJECT) {
         result* r = malloc(sizeof(struct result));
         status s = fetch(*(query->columns), query->result1->payload, query->result1->num_tuples, &r);
@@ -174,37 +154,6 @@ char* execute_db_operator(db_operator* query) {
         catalogs[0]->names[idx] = query->name1;
         catalogs[0]->results[idx] = r;
         catalogs[0]->var_count++;
-    } else if (query->type == JOIN) {
-        size_t num_tuples = query->result1->num_tuples*query->result3->num_tuples;
-        result* r1 = malloc(sizeof(struct result));
-        result* r2 = malloc(sizeof(struct result));
-        r1->payload = calloc(num_tuples, sizeof(int));
-        r2->payload = calloc(num_tuples, sizeof(int));
-        r1->type = INT;
-        r2->type = INT;
-        r1->num_tuples = 0;
-        r2->num_tuples = 0;
-        r1->max_size = query->result1->num_tuples;
-        r2->max_size = query->result3->num_tuples;
-        
-        s = join(query->result1, query->result2, query->result3, query->result4, &r1, &r2);
-
-        if (s.code != OK) {
-            log_err(s.error_message);
-            return s.error_message;
-        }
-        int idx = catalogs[0]->var_count;
-        catalogs[0]->names[idx] = query->name1;
-        catalogs[0]->results[idx] = r1;
-        catalogs[0]->var_count++;
-
-        idx++;
-        catalogs[0]->names[idx] = query->name2;
-        catalogs[0]->results[idx] = r2;
-        catalogs[0]->var_count++;
-    } else if (query->type == SHARED_SCAN) {
-        sscan = true;
-        queue = init_select_queue();
     }
 
     return "Success";
